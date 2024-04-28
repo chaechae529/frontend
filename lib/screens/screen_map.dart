@@ -126,7 +126,7 @@ class _MapState extends State<MapScreen> {
                 ),
               ),
               Positioned(
-                bottom: 10, left: 18, right:18,
+                // bottom: 10, left: 18, right:18,
                   child: BottomBar(),
               ),
             ],

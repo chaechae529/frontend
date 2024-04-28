@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:seoul/screens/chat/screen_chatroom.dart';
+import 'package:seoul/screens/community/screen_newPost.dart';
 import 'package:seoul/screens/community/screen_post.dart';
+import 'package:seoul/screens/mypage/set_info.dart';
 import 'package:seoul/screens/screen_loading.dart';
 import 'package:seoul/screens/screen_login.dart';
 import 'package:seoul/screens/screen_map.dart';
@@ -8,6 +10,8 @@ import 'package:seoul/screens/signup/screen_welcome.dart';
 import 'package:seoul/screens/signup/screen_signup.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
+// https://port-0-backend-2aat2clv3zgzjz.sel5.cloudtype.app/
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,13 +30,16 @@ class MyApp extends StatelessWidget {
       fontFamily: "Pretendard"
     ),
     routes: routes,
-    home: PostScreen()
+    home: newPostScreen(),
     );
   }
 }
 
 final routes = {
   ChatScreen.routeName: (context) => ChatScreen(),
+  PostScreen.routeName: (context) => PostScreen(),
+
+  SetInfo.routeName: (context) => SetInfo(),
 };
 
 // LoadingScreen

@@ -2,15 +2,21 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../screens/chat/screen_chatroom.dart';
+import '../../screens/community/screen_post.dart';
+import '../../screens/mypage/set_info.dart';
 
 
 class BottomBar extends StatefulWidget {
+  final bool isComment;  // 선택적 매개변수 추가
+
+  BottomBar({Key? key, this.isComment = false}) : super(key: key);
 
   @override
   _BottomBar createState() => _BottomBar();
 }
 
 class _BottomBar extends State<BottomBar>{
+
   int _selectedIndex = 0;
   final _authentication = FirebaseAuth.instance;
 
@@ -19,6 +25,11 @@ class _BottomBar extends State<BottomBar>{
       _selectedIndex = index; // 인덱스를 업데이트하고 상태 변경을 알립니다.
     });
     switch(index){
+      case 1:
+        Navigator.pushReplacementNamed(
+          context,
+          PostScreen.routeName,
+        );
       case 2:
         Navigator.pushReplacementNamed(
           context,
@@ -26,7 +37,10 @@ class _BottomBar extends State<BottomBar>{
         );
 
       case 3:
-        _authentication.signOut();
+        Navigator.pushReplacementNamed(
+          context,
+          SetInfo.routeName
+        );
     }
   }
 
@@ -34,6 +48,7 @@ class _BottomBar extends State<BottomBar>{
   Widget build(BuildContext context) {
 
     return Container(
+      margin: EdgeInsets.fromLTRB(18, 0, 18, 20),
       width: 343, height: 82,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.only(
@@ -62,8 +77,8 @@ class _BottomBar extends State<BottomBar>{
         ),
         child: BottomNavigationBar(
           type: BottomNavigationBarType.fixed, // Fixed type when having more than 3 items
-          backgroundColor: Color(0xffcfe6fb),
-          selectedItemColor: Color(0xffcfe6fb), // 선택된 아이템 색상
+          backgroundColor: widget.isComment ? Color(0xffe6e6e6) : Color(0xffcfe6fb),
+          selectedItemColor: widget.isComment ? Color(0xffe6e6e6) : Color(0xffcfe6fb), // 선택된 아이템 색상
           unselectedItemColor: Colors.white, // 선택되지 않은 아이템 색상
           currentIndex: _selectedIndex, // 현재 선택된 탭 인덱스
 

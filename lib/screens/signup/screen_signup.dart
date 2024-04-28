@@ -73,7 +73,8 @@ class _SignupScreenState extends State<SignupScreen> {
               centerTitle: true,
               title: Text('가입하기',
                 style: TextStyle(
-                fontWeight: FontWeight.bold
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
                 ),
               ),
               leading: IconButton(
