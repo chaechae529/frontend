@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:seoul/screens/screen_login.dart';
+import 'package:seoul/screens/login/screen_login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:seoul/screens/screen_map.dart';
 
@@ -57,14 +57,13 @@ class _LoadingScreenState extends State<LoadingScreen> {
                   color: Color(0xffd9d9d9),
                 ),
                 Positioned(
-                  child: Text(
-                    '앱이름',
-                    style: TextStyle(
-                      fontSize: 60,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black,
-                    ),
-                  ),),
+                  child: Image.asset(
+                      'assets/images/starfinder.png',
+                      width: 260, // 이미지의 너비
+                      height: 120, // 이미지의 높이
+                      fit: BoxFit.contain
+                  ),
+                ),
               ],
             ),
             SizedBox(height: 20), // 텍스트와 이미지 사이의 공간

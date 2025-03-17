@@ -63,6 +63,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '819031694656',
     projectId: 'seoul-17e5b',
     storageBucket: 'seoul-17e5b.appspot.com',
-    iosBundleId: 'com.example.seoul',
+    iosClientId: '819031694656-ale8rn8nanui3fvg3k2gguvmmi36t96p.apps.googleusercontent.com',
+    iosBundleId: 'com.sedata.starfinder',
   );
+
 }

@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:seoul/screens/login/screen_login.dart';
 import 'package:seoul/screens/signup/screen_star.dart';
 import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:seoul/screens/signup/screen_welcome.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -27,6 +29,7 @@ class _SignupScreenState extends State<SignupScreen> {
   String userphone = '';
   String usercerti = '';
   String userbirth = '';
+  late String verificationId;
 
   void _tryValidation(){
     // 현재 상태가 null인지 확인합니다.
@@ -36,6 +39,63 @@ class _SignupScreenState extends State<SignupScreen> {
         formKey.currentState!.save();
       }
     }
+  }
+
+  void verifyPhone(String phone) async {
+    // '+'와 국가 코드를 포함한 전체 전화번호 포맷 생성
+
+    var formattedPhone = '+82' + phone.substring(0);
+
+    final PhoneVerificationCompleted verified = (AuthCredential authResult) {
+      _authentication.signInWithCredential(authResult);
+    };
+
+    final PhoneVerificationFailed verificationFailed = (FirebaseAuthException authException) {
+      print('${authException.message}');
+      _showSnackBar("전화번호를 확인해주세요.");
+    };
+
+    final PhoneCodeSent smsSent = (String verId, [int? forceResend]) {
+      this.verificationId = verId;
+      _showSnackBar("인증번호가 전송되었습니다.");
+    };
+
+    final PhoneCodeAutoRetrievalTimeout autoTimeout = (String verId) {
+      this.verificationId = verId;
+    };
+
+    await _authentication.verifyPhoneNumber(
+      phoneNumber: formattedPhone,
+      timeout: const Duration(seconds: 120),
+      verificationCompleted: verified,
+      verificationFailed: verificationFailed,
+      codeSent: smsSent,
+      codeAutoRetrievalTimeout: autoTimeout,
+    );
+  }
+
+  void confirmCode(String code) async {
+    AuthCredential credential = PhoneAuthProvider.credential(verificationId: verificationId, smsCode: code);
+    try {
+      UserCredential result = await _authentication.signInWithCredential(credential);
+      User? user = result.user;
+
+      if (user != null) {
+        _showSnackBar("전화번호 인증이 완료되었습니다.");
+      } else {
+        _showSnackBar("인증에 실패했습니다.");
+      }
+    } on FirebaseAuthException catch (e) {
+      _showSnackBar("인증 오류: ${e.message}");
+    }
+  }
+
+  void _showSnackBar(String message) {
+    final snackBar = SnackBar(
+      content: Text(message),
+      duration: Duration(seconds: 3), // 스낵바가 보여질 시간 설정
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
 
@@ -58,6 +118,8 @@ class _SignupScreenState extends State<SignupScreen> {
     _controller.dispose();
     super.dispose();
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -105,65 +167,33 @@ class _SignupScreenState extends State<SignupScreen> {
                             ),), //아이디
                           SizedBox(
                             height: 45,
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: TextFormField(
-                                    keyboardType: TextInputType.emailAddress,
-                                    autovalidateMode: AutovalidateMode.onUserInteraction,
-                                    validator: (value) {
-                                      if (value!.isEmpty || !value.contains('@')) {
-                                        return '유효한 이메일 주소를 입력해주세요.';
-                                      }
-                                      return null;
-                                    },
-                                    onSaved: (value) {
-                                      useremail = value!;
-                                    },
-                                    onChanged: (value) {
-                                      formKey.currentState?.validate();
-                                      useremail = value;
-                                    },
+                            child: TextFormField(
+                              keyboardType: TextInputType.emailAddress,
+                              autovalidateMode: AutovalidateMode.onUserInteraction,
+                              validator: (value) {
+                                if (value!.isEmpty || !value.contains('@')) {
+                                  return '유효한 이메일 주소를 입력해주세요.';
+                                }
+                                return null;
+                              },
+                              onSaved: (value) {
+                                useremail = value!;
+                              },
+                              onChanged: (value) {
+                                formKey.currentState?.validate();
+                                useremail = value;
+                              },
 
-                                    decoration: InputDecoration(
-                                      hintText: ('이메일 확인'),
-                                      hintStyle: TextStyle(
-                                        color: Color(0xff767676),
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w300,
-                                      ),
-                                      isDense: true,
+                              decoration: InputDecoration(
+                                hintText: ('이메일 확인'),
+                                hintStyle: TextStyle(
+                                  color: Color(0xff767676),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w300,
+                                ),
+                                isDense: true,
 
-                                    ),
-                                  ),
-                                ),
-                                OutlinedButton(
-                                  onPressed: (){
-                                  },
-                                  child: Text('중복확인',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xff61abf1),
-                                    ),
-                                  ),
-                                  style: OutlinedButton.styleFrom(
-                                      minimumSize: Size.zero,
-                                      padding: EdgeInsets.only(
-                                          top: 2, bottom: 2,
-                                          right: 2, left: 2
-                                      ),
-                                      fixedSize: Size(80, 35),
-                                      backgroundColor: Colors.white,
-                                      side: BorderSide(
-                                          color: Color(0xff61abf1),
-                                          width: 1
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(30.0),)
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ),
 
@@ -315,7 +345,9 @@ class _SignupScreenState extends State<SignupScreen> {
                                   ),
                                 ),
                                 OutlinedButton(
-                                  onPressed: (){},
+                                  onPressed: (){
+                                    verifyPhone(userphone);
+                                  },
                                   child: Text('인증번호 전송',
                                     style: TextStyle(
                                       fontSize: 14,
@@ -357,7 +389,6 @@ class _SignupScreenState extends State<SignupScreen> {
                                 Expanded(
                                   child: TextFormField(
                                     autovalidateMode: AutovalidateMode.onUserInteraction,
-                                    keyboardType: TextInputType.number,
                                     validator: (value) {
                                       return null;
                                     },
@@ -382,7 +413,10 @@ class _SignupScreenState extends State<SignupScreen> {
                                   ),
                                 ),
                                 OutlinedButton(
-                                  onPressed: (){},
+                                  onPressed: (){
+                                    confirmCode(usercerti);
+
+                                  },
                                   child: Text('인증번호 확인',
                                     style: TextStyle(
                                       fontSize: 14,
@@ -469,30 +503,30 @@ class _SignupScreenState extends State<SignupScreen> {
 
                                   );
 
-                                  await FirebaseFirestore.instance.collection('user').doc(newUser.user!.uid)
-                                  .set({
-                                    'userName' : username,
-                                    'email' : useremail
-                                  });
-
-                                  if (newUser.user != null){
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context){
-                                              return StarScreen();
-                                            })
-                                    );
-                                    setState(() {
-                                      showSpinner = false;
+                                  if (newUser.user != null) {
+                                    // 사용자가 성공적으로 생성되면, Firestore에 사용자 정보 저장
+                                    await FirebaseFirestore.instance.collection('users').doc(newUser.user!.uid).set({
+                                      'email': useremail,
+                                      'phone': userphone,
+                                      'username': username,
+                                      'birthDate': userbirth
                                     });
+
+                                    // 다음 화면으로 이동
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => LoginScreen()),
+                                    );
                                   }
-                                } catch(e){
+                                } catch (e) {
                                   print(e);
+                                  setState(() {
+                                    showSpinner = false;
+                                  });
                                 }
 
                               },
-                              child: Text('다음',
+                              child: Text('회원가입',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,

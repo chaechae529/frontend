@@ -26,17 +26,14 @@ class MainAppBar extends StatelessWidget {
             SizedBox(width: 20,),
 
             Container(
-              color: Color(0xffd9d9d9),
               width: 149,
               height: 32,
               alignment: Alignment.center,
-              child: Text(
-                '앱이름',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-                textAlign: TextAlign.center,
+              child: Image.asset(
+                  'assets/images/appbar_starfinder.png',
+                  // width: 150, // 이미지의 너비
+                  // height: 35, // 이미지의 높이
+                  fit: BoxFit.contain
               ),
             ),
 
@@ -57,4 +54,22 @@ class MainAppBar extends StatelessWidget {
       ),
     );
   }
+}
+
+PreferredSizeWidget BackAppBar(BuildContext context) {
+  return AppBar(
+    centerTitle: true,
+    title: Image.asset(
+        'assets/images/appbar_starfinder.png',
+        width: 150, // 이미지의 너비
+        height: 35, // 이미지의 높이
+        fit: BoxFit.contain
+    ),
+    leading: IconButton(
+      icon: Icon(Icons.arrow_back),
+      onPressed: () {
+        Navigator.pop(context);
+      },
+    ),
+  );
 }

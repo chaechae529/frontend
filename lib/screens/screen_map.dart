@@ -5,12 +5,15 @@ import 'package:flutter/widgets.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:seoul/widget/bottombar/bottom_bar.dart';
-import 'package:seoul/widget/serchbar/serch_bar.dart';
 
 import '../widget/appbar/main_app_bar.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'dart:convert';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({Key? key}) : super(key: key);
+
+  static String routeName = "/screen_map";
 
   @override
   _MapState createState() => _MapState();
@@ -21,7 +24,68 @@ class _MapState extends State<MapScreen> {
   Completer<GoogleMapController> _controller = Completer();
   final LatLng _center = const LatLng(37.3216, 127.1268);
 
+  bool _showAllMarkers = false; // allMarkers 보여줄지말지
+
+  List<Marker> allMarkers = []; // 공공데이ㅓㅌ 핑찍기
+
   Map<MarkerId, Marker> _markers = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMarkers();
+    getCurrentLocation();
+  }
+  Future<void> _loadMarkers() async {
+    // assets 폴더에서 locations.json 파일을 읽습니다.
+    String jsonString = await rootBundle.loadString('assets/data.json');
+    // JSON 문자열을 파싱하여 리스트로 변환합니다.
+    List<dynamic> jsonResponse = json.decode(jsonString);
+
+    setState(() {
+      allMarkers = jsonResponse.map((location) => Marker(
+        markerId: MarkerId(location["media"]),
+        position: LatLng(location["latitude"], location["longitude"]),
+        infoWindow: InfoWindow(
+          title: location["media"],
+          snippet: location["detail"]
+        ),
+      )).toList();
+      
+      _markers = Map.fromIterable(allMarkers, key:  (marker) => marker.markerId, value: (marker) => marker);
+    });
+  }
+
+  // allmarkers 키고끄기
+  void _toggleMarkers() {
+    setState(() {
+      _showAllMarkers = !_showAllMarkers; // 상태를 토글합니다.
+      if (_showAllMarkers) {
+        // _showAllMarkers가 true일 경우 모든 마커를 추가합니다.
+        _markers = Map.fromIterable(allMarkers, key: (m) => m.markerId, value: (m) => m);      } else {
+        // _showAllMarkers가 false일 경우 모든 마커를 제거합니다.
+        _markers.clear();
+      }
+    });
+  }
+
+  void _updateMarkersForSearch(String searchText) {
+
+    List<Marker> filteredMarkers = [];
+
+    // 모든 마커를 순회하며 검색 텍스트를 포함하는지 확인
+    for (var marker in allMarkers) {
+      String detail = marker.infoWindow.snippet ?? ''; // 여기서 마커의 detail 정보를 얻습니다.
+      if (detail.contains(searchText)) {
+        filteredMarkers.add(marker);
+      }
+    }
+
+    setState(() {
+      // 지도에 표시될 마커 업데이트
+      _markers = Map.fromIterable(filteredMarkers, key: (marker) => marker.markerId, value: (marker) => marker);
+    });
+  }
 
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
@@ -101,18 +165,72 @@ class _MapState extends State<MapScreen> {
                     zoom: 18.0,
                   ),
                   markers: Set<Marker>.of(_markers.values),
-                  zoomControlsEnabled: true,
+                  zoomControlsEnabled: false,
                 ),
               ),
               Positioned(
                 top: 18,
                 left: 18,
                 right: 18,
-                child: MapSearchBar()
+                child: SizedBox(
+                  width: 336, height: 42,
+                  child:  MapSearchBar(
+                    onSearch: _updateMarkersForSearch,
+                    onToggle: _toggleMarkers,
+
+                  )
+                ),
+              ),
+          Positioned(
+            bottom: 110,
+            right: 10,
+            child: Card(
+              elevation: 2,
+              child: Container(
+                color: Color(0xFFFAFAFA),
+                width: 40,
+                height: 100,
+                child: Column(
+                  children: <Widget>[
+                    IconButton(
+                        icon: Icon(Icons.add),
+                        onPressed: () async {
+                          var currentZoomLevel = await mapController.getZoomLevel();
+
+                          currentZoomLevel = currentZoomLevel + 2;
+                          mapController.animateCamera(
+                            CameraUpdate.newCameraPosition(
+                              CameraPosition(
+                                target: _center,
+                                zoom: currentZoomLevel,
+                              ),
+                            ),
+                          );
+                        }),
+                    SizedBox(height: 2),
+                    IconButton(
+                        icon: Icon(Icons.remove),
+                        onPressed: () async {
+                          var currentZoomLevel = await mapController.getZoomLevel();
+                          currentZoomLevel = currentZoomLevel - 2;
+                          if (currentZoomLevel < 0) currentZoomLevel = 0;
+                          mapController.animateCamera(
+                            CameraUpdate.newCameraPosition(
+                              CameraPosition(
+                                target: _center,
+                                zoom: currentZoomLevel,
+                              ),
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+                ),
               ),
               Positioned(
-                left: 20,
-                bottom: 20,
+                left: 10,
+                bottom: 110,
                 child: GestureDetector(
                   onTap: (){
                     getCurrentLocation();
@@ -126,12 +244,72 @@ class _MapState extends State<MapScreen> {
                 ),
               ),
               Positioned(
-                // bottom: 10, left: 18, right:18,
-                  child: BottomBar(),
+                bottom: 0, left: 0, right:0,
+                  child: BottomBar(
+                    isMap: true,
+                    isBoard: false,
+                    isChat: false,
+                    isMy: false,
+                    isComment: false,
+                  ),
               ),
             ],
           ),
         ),
+    );
+  }
+}
+
+class MapSearchBar extends StatefulWidget {
+  final Function(String) onSearch;
+  final Function() onToggle;
+
+  const MapSearchBar({
+    Key? key,
+    required this.onSearch,
+    required this.onToggle,
+  }) : super(key: key);
+
+  @override
+  _MapSearchBarState createState() => _MapSearchBarState();
+}
+
+class _MapSearchBarState extends State<MapSearchBar> {
+  bool _showAllMarkers = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return SearchBar(
+      onChanged: (value) {
+        print("Input changed: $value");  // 입력된 값이 바뀔 때마다 프린트
+        widget.onSearch(value);
+      },
+      onSubmitted: (value) {
+        print("Input submitted: $value");  // 검색 제출 시 프린트
+        widget.onSearch(value);
+      },
+      textInputAction: TextInputAction.search,
+      keyboardType: TextInputType.text,
+      backgroundColor: MaterialStatePropertyAll(Color(0xffcfe6fb)),
+      leading: Icon(Icons.search, size: 18,),
+      hintText: "목적지를 입력하시오",
+      textStyle: MaterialStateProperty.all(TextStyle(
+        fontSize: 14,
+        color: Color(0xff767676),
+      )),
+      trailing: [
+        IconButton(
+          icon: _showAllMarkers
+              ? Icon(Icons.toggle_on) // 토글이 켜져 있을 때 아이콘
+              : Icon(Icons.toggle_off_outlined), // 토글이 꺼져 있을 때 아이콘
+          onPressed: () {
+            setState(() {
+              _showAllMarkers = !_showAllMarkers;
+            });
+            widget.onToggle(); // 부모 위젯의 토글 핸들러를 호출합니다.
+          },
+        ),
+      ],
     );
   }
 }

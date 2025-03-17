@@ -1,49 +1,46 @@
 class Board {
-  int? id;
-  final int userId;
+  final String? boardId;
+  final String userId;
   final String body;
-  final String category;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final int likeCnt;
   final int commentCnt;
-  final int? uploadImageId;
+  final List<String>? uploadImageUrls;
 
   Board({
-    this.id,
+    this.boardId,
     required this.userId,
     required this.body,
-    required this.category,
     this.createdAt,
     this.updatedAt,
     required this.likeCnt,
     required this.commentCnt,
-    required this.uploadImageId,
+    this.uploadImageUrls = const [],
   });
 
   factory Board.fromJson(Map<String, dynamic> json) {
     return Board(
-      id: json['id'],
-      userId: json['userId'] as int,
-      body: json['body'] as String,
-      category: json['category'] as String,
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
-      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
-      likeCnt: json['likeCnt'] as int,
-      commentCnt: json['commentCnt'] as int,
-      uploadImageId: json['uploadImageId'] as int,
+      boardId: json['boardId']as String? ?? 'null',
+      userId: json['userId'] as String? ?? 'null',
+      body: json['body'] as String? ?? 'null',
+      createdAt: json['createdAt']?.toDate(),
+      updatedAt: json['updatedAt']?.toDate(),
+      likeCnt: json['likeCnt'] as int? ?? 0,
+      commentCnt: json['commentCnt'] as int? ?? 0,
+      uploadImageUrls: json['uploadImageUrls'] != null ? List<String>.from(json['uploadImageUrls']) : [],
     );
   }
 
   Map<String, dynamic> toJson() => {
+    'boardId': boardId,
     'userId': userId,
     'body': body,
-    'category': category,
     if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
     if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
     'likeCnt': likeCnt,
     'commentCnt': commentCnt,
-    'uploadImageId': uploadImageId,
+    'uploadImageUrls': uploadImageUrls,
   };
 }
 
